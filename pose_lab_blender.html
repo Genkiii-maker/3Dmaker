@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>POSE LAB — Blender Pose Studio</title>
+<style>
+:root{--bg:#10131b;--panel:#191e2a;--panel2:#202737;--line:#30394c;--text:#f1f4fb;--muted:#9ca8bd;--accent:#9b8cff;--mint:#75e0c1;--pink:#ff9db4}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,select,input{font:inherit}button{cursor:pointer;border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--text);background:var(--panel2)}button:hover{border-color:var(--accent)}button.primary{background:var(--accent);border-color:var(--accent);color:#111326;font-weight:700}
+header{height:68px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 22px;gap:16px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.08em}.logo{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--accent),var(--mint));color:#121521;font-size:19px}
+.brand small{display:block;color:var(--muted);font-size:10px;font-weight:500;letter-spacing:.13em}.head-actions{display:flex;gap:8px;align-items:center}
+main{display:grid;grid-template-columns:minmax(0,1fr) 330px;min-height:calc(100vh - 68px)}
+.stage-wrap{padding:18px;min-width:0;display:flex;flex-direction:column;gap:12px}.stage-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.eyebrow{font-size:11px;letter-spacing:.16em;color:var(--mint);font-weight:800}.stage-top h1{font-size:20px;margin:2px 0 0}.stage-tools{display:flex;gap:6px;flex-wrap:wrap}.stage{position:relative;flex:1;min-height:480px;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#252c40 0%,#151a27 58%,#11151f 100%)}
+#view{position:absolute;inset:0}.hint{position:absolute;left:16px;bottom:14px;color:#aeb8ca;background:#111722c9;border:1px solid #343d50;border-radius:10px;padding:8px 11px;font-size:11px;pointer-events:none}.view-label{position:absolute;top:14px;left:16px;font-size:10px;letter-spacing:.14em;color:#aab6cc}.stage-bottom{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--mint);margin-right:6px}
+aside{border-left:1px solid var(--line);background:#141923;padding:18px;display:flex;flex-direction:column;gap:15px}.panel-head{display:flex;justify-content:space-between;align-items:center}.panel-head h2{font-size:16px;margin:0}.tag{font-size:10px;color:var(--mint);border:1px solid #356b63;padding:3px 7px;border-radius:20px}
+.tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;padding:4px;background:#0f131c;border-radius:12px}.tab{border:0;background:transparent;color:var(--muted);padding:8px 4px;font-size:12px}.tab.active{background:var(--panel2);color:var(--text)}
+.section{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:13px}.section h3{margin:0 0 11px;font-size:12px;color:#cbd3e2;letter-spacing:.04em}.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px}.preset{padding:0;overflow:hidden;text-align:left;background:#202737}.preset .thumb{height:64px;display:grid;place-items:center;background:linear-gradient(135deg,#292e45,#1a2432);font-size:27px}.preset strong{display:block;font-size:11px;padding:7px 8px}.preset.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+label{display:block;color:var(--muted);font-size:11px;margin-bottom:7px}.control-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 5px}.control-row label{margin:0;color:#dbe1ed;font-size:12px}.value{font-variant-numeric:tabular-nums;color:var(--mint);font-size:11px;min-width:42px;text-align:right}input[type=range]{width:100%;accent-color:var(--accent);height:18px;cursor:pointer}.select{width:100%;padding:9px;border:1px solid var(--line);border-radius:9px;background:#111722;color:var(--text)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:7px}.small{font-size:11px;color:var(--muted)}.footer-note{font-size:11px;color:var(--muted);line-height:1.6}
+.hidden{display:none!important}
+@media(max-width:850px){main{grid-template-columns:1fr}aside{border-left:0;border-top:1px solid var(--line)}.stage{min-height:55vh}header{padding:0 14px}.stage-wrap{padding:12px}.head-actions .optional{display:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">P</div><div>POSE LAB<small>BLENDER POSE STUDIO</small></div></div>
+  <div class="head-actions"><button id="resetBtn">↺ リセット</button><button class="primary" id="exportBtn">ポーズ情報を書き出す ↗</button></div>
+</header>
+<main>
+<section class="stage-wrap">
+  <div class="stage-top"><div><div class="eyebrow">3D WORKSPACE</div><h1>ポーズを、思いのままに。</h1></div><div class="stage-tools"><button id="frontBtn">正面</button><button id="sideBtn">側面</button><button id="gridBtn">床グリッド ON/OFF</button></div></div>
+  <div class="stage"><div id="view"></div><div class="view-label">POSE LAB / PREVIEW</div><div class="hint">ドラッグ：視点回転　・　ホイール：ズーム　・　右ドラッグ：移動</div></div>
+  <div class="stage-bottom"><span><i class="dot"></i>3Dプレビュー</span><span>※ このサイト内のモデルはポーズ検討用の簡易マネキンです</span></div>
+</section>
+<aside>
+  <div class="panel-head"><h2>ポーズコントロール</h2><span class="tag">BETA</span></div>
+  <div class="tabs"><button class="tab active" data-tab="pose">ポーズ</button><button class="tab" data-tab="body">体の調整</button><button class="tab" data-tab="export">書き出し</button></div>
+  <div id="posePanel">
+    <div class="section"><h3>クイックポーズ</h3><div class="preset-grid">
+      <button class="preset active" data-preset="standing"><div class="thumb">🧍</div><strong>自然な立ち姿</strong></button>
+      <button class="preset" data-preset="thinking"><div class="thumb">🤔</div><strong>考えるポーズ</strong></button>
+      <button class="preset" data-preset="run"><div class="thumb">🏃</div><strong>走るポーズ</strong></button>
+      <button class="preset" data-preset="arms"><div class="thumb">🙌</div><strong>両手を上げる</strong></button>
+      <button class="preset" data-preset="photo"><div class="thumb">📸</div><strong>集合写真向け</strong></button>
+      <button class="preset" data-preset="sit"><div class="thumb">🪑</div><strong>座るイメージ</strong></button>
+    </div></div>
+    <div class="section"><h3>関節を調整</h3><label for="jointSelect">動かす部位</label><select class="select" id="jointSelect">
+      <option value="leftUpperArm">左上腕</option><option value="rightUpperArm">右上腕</option><option value="leftForearm">左前腕</option><option value="rightForearm">右前腕</option><option value="leftThigh">左太もも</option><option value="rightThigh">右太もも</option><option value="leftShin">左すね</option><option value="rightShin">右すね</option><option value="torso">胴体</option><option value="head">頭</option>
+    </select><div class="control-row"><label for="rotX">前後に曲げる</label><span class="value" id="rotXVal">0°</span></div><input id="rotX" type="range" min="-120" max="120" value="0">
+    <div class="control-row"><label for="rotY">左右にひねる</label><span class="value" id="rotYVal">0°</span></div><input id="rotY" type="range" min="-120" max="120" value="0">
+    <div class="control-row"><label for="rotZ">横に開く</label><span class="value" id="rotZVal">0°</span></div><input id="rotZ" type="range" min="-150" max="150" value="0">
+    <div class="two"><button id="mirrorBtn">⇄ 左右反転</button><button id="neutralBtn">部位を戻す</button></div>
+    </div>
+    <div class="section"><h3>便利ツール</h3><div class="two"><button id="wireBtn">ワイヤー表示</button><button id="centerBtn">モデルを中央へ</button></div><p class="small">ヒント：プリセットを選んでから関節を微調整すると、ポーズを作りやすいよ。</p></div>
+  </div>
+  <div id="bodyPanel" class="hidden">
+    <div class="section"><h3>モデルの見た目</h3><label for="shapeSelect">体型プリセット</label><select class="select" id="shapeSelect"><option value="normal">標準</option><option value="slim">細身</option><option value="broad">肩幅広め</option></select>
+    <div class="control-row"><label for="heightRange">身長バランス</label><span class="value" id="heightVal">100%</span></div><input id="heightRange" type="range" min="80" max="120" value="100">
+    <div class="control-row"><label for="headRange">頭の大きさ</label><span class="value" id="headVal">100%</span></div><input id="headRange" type="range" min="80" max="125" value="100">
+    <div class="control-row"><label for="limbRange">手足の長さ</label><span class="value" id="limbVal">100%</span></div><input id="limbRange" type="range" min="80" max="120" value="100"></div>
+    <div class="section"><h3>表示オプション</h3><button id="axesBtn">座標軸 ON/OFF</button> <button id="gridBtn2">床グリッド ON/OFF</button></div>
+  </div>
+  <div id="exportPanel" class="hidden">
+    <div class="section"><h3>ポーズを書き出す</h3><p class="small">現在の関節角度をJSON形式で保存できます。Blenderで同じ角度を再現するときのメモとして使ってね。</p><button class="primary" id="downloadBtn" style="width:100%">JSONをダウンロード</button><button id="copyBtn" style="width:100%;margin-top:8px">JSONを表示・コピー</button><textarea id="jsonOut" class="hidden" style="width:100%;height:150px;margin-top:10px;background:#10151f;color:#dce5f5;border:1px solid var(--line);border-radius:8px;padding:8px"></textarea></div>
+    <div class="section"><h3>Blenderで使うには</h3><p class="small">このJSONは角度の記録用です。Blenderのモデルへ自動適用するには、リグのボーン名に合わせたBlender用スクリプトが別途必要です。Mixamoリグにも対応できるよう、次の段階で拡張できます。</p></div>
+  </div>
+  <div class="footer-note">POSE LAB · ブラウザ上で動くポージング補助ツール<br>作成したポーズはこのページ内で操作できます。</div>
+</aside>
+</main>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+const mount=document.getElementById('view');
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(38,1,.1,100); camera.position.set(0,2.5,8.5);
+const renderer=new THREE.WebGLRenderer({antialias:true,alpha:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.shadowMap.enabled=true; renderer.outputColorSpace=THREE.SRGBColorSpace; mount.appendChild(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement); controls.target.set(0,1.45,0); controls.enableDamping=true; controls.dampingFactor=.07;
+scene.add(new THREE.HemisphereLight(0xdfe7ff,0x34394a,2.0));
+const key=new THREE.DirectionalLight(0xffffff,2.6);key.position.set(4,7,5);key.castShadow=true;scene.add(key);
+const fill=new THREE.DirectionalLight(0x9b8cff,1.2);fill.position.set(-4,3,-3);scene.add(fill);
+const grid=new THREE.GridHelper(12,24,0x66718e,0x343c50);grid.position.y=0;scene.add(grid);
+const axes=new THREE.AxesHelper(1.5);axes.position.set(-2.3,.02,0);scene.add(axes);
+const mat=(color,roughness=.72)=>new THREE.MeshStandardMaterial({color,roughness,metalness:.03});
+const skin=mat(0xe5b99c), shirt=mat(0x8d82ff), pants=mat(0x36445f), shoe=mat(0x202532), jointMat=mat(0xf0c9ae), accent=mat(0x75e0c1);
+const root=new THREE.Group();scene.add(root);
+const pivots={}; const meshes={}; let wire=false;
+function ellipsoid(parent,name,pos,scale,material){const m=new THREE.Mesh(new THREE.SphereGeometry(1,24,18),material);m.name=name;m.position.set(...pos);m.scale.set(...scale);m.castShadow=true;m.receiveShadow=true;parent.add(m);meshes[name]=m;return m;}
+function capsuleBetween(parent,name,a,b,r1,r2,material){const A=new THREE.Vector3(...a),B=new THREE.Vector3(...b),d=new THREE.Vector3().subVectors(B,A);const m=new THREE.Mesh(new THREE.CylinderGeometry(r2,r1,d.length(),16,1),material);m.position.copy(A).add(B).multiplyScalar(.5);m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),d.normalize());m.castShadow=true;parent.add(m);meshes[name]=m;return m;}
+function pivot(name,pos,parent=root){const p=new THREE.Group();p.name=name;p.position.set(...pos);parent.add(p);pivots[name]=p;return p;}
+function segment(parent,name,length,rTop,rBottom,material){const m=new THREE.Mesh(new THREE.CylinderGeometry(rTop,rBottom,length,18,1),material);m.position.y=-length/2;m.castShadow=true;parent.add(m);meshes[name]=m;return m;}
+function build(){
+ // central torso pivot at pelvis; local Y up, front is +Z
+ const torso=pivot('torso',[0,1.05,0]);
+ ellipsoid(torso,'pelvis',[0,0,0],[.27,.22,.17],pants);
+ const chest=pivot('chest',[0,.18,0],torso);
+ ellipsoid(chest,'shirtBody',[0,.34,0],[.39,.48,.22],shirt);
+ ellipsoid(chest,'neck',[0,.79,0],[.105,.15,.105],skin);
+ const head=pivot('head',[0,.93,0],chest);
+ ellipsoid(head,'headMesh',[0,.13,0],[.22,.29,.205],skin);
+ ellipsoid(head,'nose',[0,.12,.195],[.045,.055,.065],skin);
+ // arms: pivots at shoulders, local segment extends down
+ for(const side of ['left','right']){
+   const s=side==='left'?-1:1, shoulder=pivot(side+'UpperArm',[s*.43,.65,0],chest);
+   ellipsoid(shoulder,side+'Shoulder',[0,0,0],[.14,.15,.14],shirt);
+   segment(shoulder,side+'UpperArmMesh',.43,.105,.13,shirt);
+   ellipsoid(shoulder,side+'Elbow',[0,-.43,0],[.085,.085,.085],skin);
+   const fore=pivot(side+'Forearm',[0,-.43,0],shoulder);
+   segment(fore,side+'ForearmMesh',.4,.065,.09,skin);
+   ellipsoid(fore,side+'Hand',[0,-.43,0],[.075,.12,.055],skin);
+   // leg pivots at hips
+   const thigh=pivot(side+'Thigh',[s*.16,-.08,0],torso);
+   segment(thigh,side+'ThighMesh',.58,.13,.18,pants);
+   ellipsoid(thigh,side+'Knee',[0,-.58,0],[.105,.105,.11],skin);
+   const shin=pivot(side+'Shin',[0,-.58,0],thigh);
+   segment(shin,side+'ShinMesh',.56,.075,.105,pants);
+   ellipsoid(shin,side+'Ankle',[0,-.56,0],[.075,.09,.08],skin);
+   ellipsoid(shin,side+'Foot',[0,-.64,.11],[.105,.08,.19],shoe);
+ }
+ // hands are parented to forearm for simple articulated model
+}
+build();
+function resize(){const w=mount.clientWidth,h=mount.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+new ResizeObserver(resize).observe(mount);resize();
+const base={};Object.keys(pivots).forEach(k=>base[k]=pivots[k].rotation.clone());
+const jointKeys=['leftUpperArm','rightUpperArm','leftForearm','rightForearm','leftThigh','rightThigh','leftShin','rightShin','torso','head'];
+const angles={};jointKeys.forEach(k=>angles[k]={x:0,y:0,z:0});
+function apply(k){const p=pivots[k];if(!p)return;p.rotation.set(THREE.MathUtils.degToRad(angles[k].x),THREE.MathUtils.degToRad(angles[k].y),THREE.MathUtils.degToRad(angles[k].z));}
+function syncSliders(){const k=document.getElementById('jointSelect').value;['X','Y','Z'].forEach((axis,i)=>{const v=angles[k][axis.toLowerCase()];document.getElementById('rot'+axis).value=v;document.getElementById('rot'+axis+'Val').textContent=Math.round(v)+'°';})}
+function setPose(name){
+ jointKeys.forEach(k=>angles[k]={x:0,y:0,z:0});
+ const put=(k,x=0,y=0,z=0)=>angles[k]={x,y,z};
+ if(name==='thinking'){put('leftUpperArm',0,0,-65);put('leftForearm',0,0,-95);put('rightUpperArm',0,0,42);put('rightForearm',0,0,110);put('head',-8,0,10)}
+ if(name==='run'){put('leftUpperArm',-35,0,65);put('leftForearm',0,0,80);put('rightUpperArm',25,0,-70);put('rightForearm',0,0,-85);put('leftThigh',-55,0,0);put('rightThigh',38,0,0);put('leftShin',75,0,0);put('rightShin',-25,0,0);put('torso',-10,0,0)}
+ if(name==='arms'){put('leftUpperArm',0,0,-150);put('rightUpperArm',0,0,150);put('leftForearm',0,0,-10);put('rightForearm',0,0,10)}
+ if(name==='photo'){put('leftUpperArm',0,0,-35);put('leftForearm',0,0,-45);put('rightUpperArm',0,0,35);put('rightForearm',0,0,45);put('head',0,0,5)}
+ if(name==='sit'){put('leftThigh',-85,0,0);put('rightThigh',-85,0,0);put('leftShin',85,0,0);put('rightShin',85,0,0);put('leftUpperArm',0,0,-15);put('rightUpperArm',0,0,15)}
+ jointKeys.forEach(apply);syncSliders();
+ document.querySelectorAll('.preset').forEach(b=>b.classList.toggle('active',b.dataset.preset===name));
+}
+document.querySelectorAll('.preset').forEach(b=>b.addEventListener('click',()=>setPose(b.dataset.preset)));
+document.getElementById('jointSelect').addEventListener('change',syncSliders);
+['X','Y','Z'].forEach((axis,i)=>document.getElementById('rot'+axis).addEventListener('input',e=>{const k=document.getElementById('jointSelect').value;angles[k][axis.toLowerCase()]=+e.target.value;document.getElementById('rot'+axis+'Val').textContent=e.target.value+'°';apply(k)}));
+document.getElementById('resetBtn').onclick=()=>{setPose('standing');document.getElementById('shapeSelect').value='normal';document.getElementById('heightRange').value=100;document.getElementById('headRange').value=100;document.getElementById('limbRange').value=100;applyBody()};
+document.getElementById('neutralBtn').onclick=()=>{const k=document.getElementById('jointSelect').value;angles[k]={x:0,y:0,z:0};apply(k);syncSliders()};
+document.getElementById('mirrorBtn').onclick=()=>{const pairs=[['leftUpperArm','rightUpperArm'],['leftForearm','rightForearm'],['leftThigh','rightThigh'],['leftShin','rightShin']];pairs.forEach(([l,r])=>{const a={...angles[l]};angles[l]={x:angles[r].x,y:-angles[r].y,z:-angles[r].z};angles[r]={x:a.x,y:-a.y,z:-a.z};apply(l);apply(r)});syncSliders()};
+document.getElementById('frontBtn').onclick=()=>{camera.position.set(0,2.5,8.5);controls.target.set(0,1.45,0);controls.update()};
+document.getElementById('sideBtn').onclick=()=>{camera.position.set(8.5,2.5,0);controls.target.set(0,1.45,0);controls.update()};
+document.getElementById('centerBtn').onclick=()=>{controls.target.set(0,1.45,0);camera.position.set(0,2.5,8.5);controls.update()};
+let gridOn=true;function toggleGrid(){gridOn=!gridOn;grid.visible=gridOn}document.getElementById('gridBtn').onclick=toggleGrid;document.getElementById('gridBtn2').onclick=toggleGrid;document.getElementById('axesBtn').onclick=()=>axes.visible=!axes.visible;
+document.getElementById('wireBtn').onclick=()=>{wire=!wire;Object.values(meshes).forEach(m=>{if(m.material)m.material.wireframe=wire})};
+function applyBody(){const shape=document.getElementById('shapeSelect').value;const h=+document.getElementById('heightRange').value/100,hd=+document.getElementById('headRange').value/100,l=+document.getElementById('limbRange').value/100;root.scale.set(1,h,1);if(meshes.headMesh)meshes.headMesh.scale.set(.22*hd,.29*hd,.205*hd);const shoulder=shape==='broad'?1.18:shape==='slim'?.82:1;['leftShoulder','rightShoulder','shirtBody'].forEach(n=>{if(meshes[n]){if(n==='shirtBody')meshes[n].scale.x=.39*shoulder;else meshes[n].scale.x=.14*shoulder}});['leftUpperArmMesh','rightUpperArmMesh','leftForearmMesh','rightForearmMesh','leftThighMesh','rightThighMesh','leftShinMesh','rightShinMesh'].forEach(n=>{if(meshes[n])meshes[n].scale.y=l})}
+['shapeSelect','heightRange','headRange','limbRange'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{applyBody();[['heightRange','heightVal'],['headRange','headVal'],['limbRange','limbVal']].forEach(([a,b])=>document.getElementById(b).textContent=document.getElementById(a).value+'%')}));
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));['pose','body','export'].forEach(p=>document.getElementById(p+'Panel').classList.toggle('hidden',p!==t.dataset.tab))});
+function poseJSON(){return JSON.stringify({app:'POSE LAB',formatVersion:1,units:'degrees',note:'Angles are preview joint rotations, not automatically mapped to Blender bones.',angles},null,2)}
+document.getElementById('downloadBtn').onclick=()=>{const blob=new Blob([poseJSON()],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='pose-lab-pose.json';a.click();URL.revokeObjectURL(a.href)};
+document.getElementById('copyBtn').onclick=()=>{const t=document.getElementById('jsonOut');t.value=poseJSON();t.classList.toggle('hidden');t.focus();t.select();if(!t.classList.contains('hidden'))navigator.clipboard?.writeText(t.value).catch(()=>{})};
+document.getElementById('exportBtn').onclick=()=>{document.querySelector('[data-tab="export"]').click();document.getElementById('jsonOut').value=poseJSON();document.getElementById('jsonOut').classList.remove('hidden')};
+setPose('standing');
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}animate();
+</script>
+</body></html>
